@@ -1,0 +1,10 @@
+# Classical ML / classical CV only — no deep learning, no pretrained models
+numpy
+pandas
+scikit-learn
+scikit-image
+opencv-python-headless
+scipy
+matplotlib
+seaborn
+joblib
