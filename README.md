@@ -1,58 +1,52 @@
-# Chest X-Ray Multi-Condition Detection — DataML Technical Championship
+# Chest X-Ray Multi-Condition Detection
 
-## Problem Understanding
+## What we're solving
 
-Given a chest X-ray image, predict independent probabilities (0–1) for the presence of
-five conditions:
+We're given chest X-rays and need to figure out, for each one, how likely it is to show
+each of five conditions: **Atelectasis, Effusion, Infiltration, Nodule, and Pneumothorax**.
 
-- Atelectasis
-- Effusion
-- Infiltration
-- Nodule
-- Pneumothorax
+This isn't a "pick one" problem — a single X-ray can show multiple conditions at once, or
+none at all. So instead of classifying each image into one bucket, we're predicting five
+separate probabilities per image, one per condition.
 
-A single X-ray may show zero, one, or several of these at once — this is a **multi-label**
-problem, not multi-class. Each condition gets its own probability score per image.
+The real constraint on this challenge is **no deep learning**. No CNNs, no pretrained models,
+no learned feature extractors — everything has to be built by hand: we choose what to measure
+in each image, extract it ourselves, and justify why it should matter medically. The modeling
+part (logistic regression, random forest, etc.) is almost secondary to getting the feature
+representation right.
 
-**Constraint:** classical ML only. No deep learning, no CNNs, no pretrained models or
-pretrained feature extractors at any stage. All image representations must be hand-designed
-and explicitly justified.
+## How the repo is organized
+data/ # train_labels.csv + raw images (images are gitignored, not pushed)
+src/ # our actual code — EDA, feature extraction, training
+notebooks/ # scratch work / exploration
+reports/ # write-up and figures for submission
+outputs/ # predictions.csv and saved models
+## Where we are right now
 
-## Repository Structure
+- [x] Repo set up
+- [ ] EDA — class balance, which conditions co-occur, basic image stats
+- [ ] Texture features (GLCM / LBP)
+- [ ] Intensity / histogram features
+- [ ] Shape & segmentation features
+- [ ] Edge / gradient features (HOG)
+- [ ] Frequency-domain features (Gabor / FFT)
+- [ ] Train + validate models
+- [ ] Generate final predictions.csv
+- [ ] Write-up
 
-```
-data/            # train_labels.csv lives here; raw images are NOT committed (see .gitignore)
-src/             # reusable Python modules (EDA, feature extraction, modeling)
-notebooks/       # exploratory notebooks
-reports/         # write-up, figures, checkpoint notes
-outputs/         # predictions.csv, saved models (large binaries gitignored)
-```
+## Our approach so far
 
-## Status
+We're treating this as five separate binary classification problems rather than one
+multi-class problem — one classifier per condition, each scored on ROC-AUC against a
+held-out validation split. This keeps things simple to reason about: we can tell exactly
+which features are actually helping with which disease, instead of everything getting
+blended into one score.
 
-- [x] Repo scaffolded
-- [ ] EDA (class balance, co-occurrence, image properties)
-- [ ] Feature engineering — texture (GLCM/LBP)
-- [ ] Feature engineering — intensity/histogram
-- [ ] Feature engineering — shape/segmentation
-- [ ] Feature engineering — edge/gradient (HOG)
-- [ ] Feature engineering — frequency domain (Gabor/FFT)
-- [ ] Model training + validation split
-- [ ] Final predictions.csv
-- [ ] Write-up (reports/)
-
-## Approach (will be expanded as work progresses)
-
-We are treating this as 5 independent binary classification problems (One-vs-Rest),
-each scored by ROC-AUC on a held-out validation split, since it maps directly onto the
-"probability per condition" requirement and keeps each feature's contribution to each
-disease interpretable and easy to justify.
-
-## How to Reproduce
+## Running it yourself
 
 ```bash
 pip install -r requirements.txt
-python src/eda.py            # generates EDA summary + figures in reports/
-python src/features.py       # extracts feature matrix to outputs/
-python src/train.py          # trains models, outputs/predictions.csv
+python src/eda.py            # EDA summary + figures → reports/
+python src/features.py       # builds the feature matrix → outputs/
+python src/train.py          # trains models, writes outputs/predictions.csv
 ```
