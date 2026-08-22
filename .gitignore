@@ -1,12 +1,21 @@
-# Data (do not commit raw images/large files to GitHub)
-data/train/
-data/test/
+# Data
+
+# Dataset images
+
 *.png
 *.jpg
 *.jpeg
 
+# Dataset folders
+
+train/
+test/
+data/train/
+data/test/
+
 # Python
-__pycache__/
+
+**pycache**/
 *.pyc
 .ipynb_checkpoints/
 .venv/
@@ -14,9 +23,11 @@ venv/
 env/
 
 # OS
+
 .DS_Store
 Thumbs.db
 
 # Outputs that are regenerated, not source
+
 outputs/*.pkl
 outputs/*.joblib
