@@ -1,0 +1,2 @@
+Explanation:
+The dataset contains 4,484 chest X-ray images but only 3,536 unique Base IDs, with 1,564 images (35%) belonging to Base IDs that appear multiple times. This means a significant portion of the dataset consists of repeated Base-ID groups rather than one image per unique case. For analysis, treating every image as an independent observation could overestimate the amount of unique data and potentially affect model evaluation.
