@@ -31,3 +31,16 @@ Thumbs.db
 
 outputs/*.pkl
 outputs/*.joblib
+
+# Local development
+
+.vscode/
+
+# Generated feature files
+
+Data/*.npy
+
+
+# Generated results
+
+datasets/Results.csv
