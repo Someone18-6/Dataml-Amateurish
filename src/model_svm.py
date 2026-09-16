@@ -50,6 +50,4 @@ for i, disease in enumerate(DISEASES):
 
 macro_auc = np.mean(auc_scores)
 
-print("\n==============================")
 print("Macro AUROC:", round(macro_auc, 4))
-print("==============================")
