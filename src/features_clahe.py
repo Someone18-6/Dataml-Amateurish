@@ -1,16 +1,30 @@
-import os
+from pathlib import Path
+
 import cv2
 import pandas as pd
 import numpy as np
 from skimage.feature import hog
 
 
-IMAGE_DIR = r"C:\Users\K SRAVYA\Downloads\Chest_xrays\Chest_xrays\Dataml-Amateurish\datasets\train"
+ROOT = Path(__file__).resolve().parents[1]
+
+TRAIN_DIR = ROOT / "datasets" / "train"
+TEST_DIR = ROOT / "datasets" / "test"
+
+DISEASES = [
+    "Atelectasis",
+    "Effusion",
+    "Infiltration",
+    "Nodule",
+    "Pneumothorax"
+]
 
 
-def extract_features(df):
+def extract_features(df, image_dir, include_labels=True):
+
     features = []
     labels = []
+    image_names = []
     missing = 0
 
     clahe = cv2.createCLAHE(
@@ -21,25 +35,25 @@ def extract_features(df):
     for _, row in df.iterrows():
 
         image_name = row["Image Index"]
-        image_path = os.path.join(IMAGE_DIR, image_name)
+        image_path = image_dir / image_name
 
-        if not os.path.exists(image_path):
+        if not image_path.exists():
             missing += 1
             continue
 
-        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(
+            str(image_path),
+            cv2.IMREAD_GRAYSCALE
+        )
 
         if image is None:
             missing += 1
             continue
 
-        # EXP-05: enhance local contrast
         image = clahe.apply(image)
 
-        # Keep same resolution as previous experiments
         image = cv2.resize(image, (128, 128))
 
-        # Same HOG features
         hog_features = hog(
             image,
             orientations=9,
@@ -48,44 +62,113 @@ def extract_features(df):
             block_norm="L2-Hys"
         )
 
-        # Same intensity features
         intensity = image.astype(np.float32) / 255.0
         intensity = intensity.flatten()
 
-        # HOG + Intensity
-        feature = np.concatenate([hog_features, intensity])
+        feature = np.concatenate([
+            hog_features,
+            intensity
+        ])
 
         features.append(feature)
+        image_names.append(image_name)
 
-        labels.append([
-            row["Atelectasis"],
-            row["Effusion"],
-            row["Infiltration"],
-            row["Nodule"],
-            row["Pneumothorax"]
-        ])
+        if include_labels:
+            labels.append([
+                row["Atelectasis"],
+                row["Effusion"],
+                row["Infiltration"],
+                row["Nodule"],
+                row["Pneumothorax"]
+            ])
 
     print("Missing images:", missing)
 
-    return np.array(features), np.array(labels)
+    X = np.array(features)
+
+    if include_labels:
+        y = np.array(labels)
+    else:
+        y = None
+
+    return X, y, image_names
 
 
 if __name__ == "__main__":
 
-    train_df = pd.read_csv("Data/train_split.csv")
-    val_df = pd.read_csv("Data/validation_split.csv")
+    train_df = pd.read_csv(
+        ROOT / "Data" / "train_split.csv"
+    )
 
-    X_train, y_train = extract_features(train_df)
-    X_val, y_val = extract_features(val_df)
+    print("\nExtracting training features...")
+
+    X_train, y_train, train_names = extract_features(
+        train_df,
+        TRAIN_DIR,
+        include_labels=True
+    )
+
+    val_df = pd.read_csv(
+        ROOT / "Data" / "validation_split.csv"
+    )
+
+    print("\nExtracting validation features...")
+
+    X_val, y_val, val_names = extract_features(
+        val_df,
+        TRAIN_DIR,
+        include_labels=True
+    )
+
+    test_files = sorted(
+        [file.name for file in TEST_DIR.glob("*.png")]
+    )
+
+    test_df = pd.DataFrame({
+        "Image Index": test_files
+    })
+
+    print("\nExtracting test features...")
+
+    X_test, _, test_names = extract_features(
+        test_df,
+        TEST_DIR,
+        include_labels=False
+    )
+
+    print("\n========== FEATURE SHAPES ==========")
 
     print("Training features:", X_train.shape)
     print("Training labels:", y_train.shape)
+
     print("Validation features:", X_val.shape)
     print("Validation labels:", y_val.shape)
 
-    np.save("Data/X_train_clahe.npy", X_train)
-    np.save("Data/y_train_clahe.npy", y_train)
-    np.save("Data/X_val_clahe.npy", X_val)
-    np.save("Data/y_val_clahe.npy", y_val)
+    print("Test features:", X_test.shape)
+
+    np.save(
+        ROOT / "Data" / "X_train_clahe.npy",
+        X_train
+    )
+
+    np.save(
+        ROOT / "Data" / "y_train_clahe.npy",
+        y_train
+    )
+
+    np.save(
+        ROOT / "Data" / "X_val_clahe.npy",
+        X_val
+    )
+
+    np.save(
+        ROOT / "Data" / "y_val_clahe.npy",
+        y_val
+    )
+
+    np.save(
+        ROOT / "Data" / "X_test_clahe.npy",
+        X_test
+    )
 
     print("\nCLAHE features saved successfully.")
